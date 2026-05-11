@@ -16,22 +16,26 @@ export function SessionView() {
 
   return (
     <main className={`session-layout ${state.focusMode ? 'focus-active' : ''}`}>
-      <section className="panel patient-panel">
-        <div className="section-head">
-          <div>
-            <p className="eyebrow">Turn {state.turn}/6. Ten-minute block</p>
-            <h2>{patient.name}</h2>
-          </div>
-          <div className="anxiety-meter">
-            <span>Anxiety</span>
-            <meter min="0" max="100" value={state.anxiety} />
-            <strong>{state.anxiety}</strong>
+      {/* Office Viewport - POV of Therapist */}
+      <section className="office-viewport">
+        <div className="office-wall">
+          <div className="certificate-wall">
+             <div className="certificate" title="Psychology Degree">📜<br/>Degree</div>
+             {state.turn > 3 && <div className="certificate" title="Specialization">📜<br/>Spec.</div>}
           </div>
         </div>
-        <div className="patient-text">
-          <p>{node.patientText}</p>
+
+        <div className="patient-container">
+          <div className="patient-text-bubble">
+             {node.patientText}
+          </div>
+          <div className="patient-sprite-placeholder">
+            {patient.name}
+          </div>
         </div>
-        <div className="keyword-row">
+
+        {/* Floating keyword tokens over the patient */}
+        <div className="keyword-row" style={{ position: 'absolute', bottom: '20px', left: '20px' }}>
           {node.keywordTokenIds.map((tokenId) => {
             const token = patient.textTokens.find((entry) => entry.id === tokenId);
             return token ? (
@@ -45,6 +49,48 @@ export function SessionView() {
             ) : null;
           })}
         </div>
+
+        <div className="anxiety-meter" style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.8)', padding: '10px', borderRadius: '12px' }}>
+            <span className="eyebrow">Anxiety</span>
+            <meter min="0" max="100" value={state.anxiety} />
+            <strong>{state.anxiety}</strong>
+        </div>
+      </section>
+
+      {/* Observation Panel */}
+      <aside className="panel cue-panel">
+        <div className="section-head">
+          <div>
+            <p className="eyebrow">Observation mode</p>
+            <h3>Patient cues</h3>
+          </div>
+          <button
+            type="button"
+            className={state.focusMode ? 'focus-toggle active' : 'focus-toggle'}
+            onClick={() => dispatch({ type: 'TOGGLE_FOCUS' })}
+            aria-label={state.focusMode ? 'Close focus mode' : 'Open focus mode to observe patient cues'}
+          >
+            {state.focusMode ? 'Focus' : 'Focus'}
+          </button>
+        </div>
+        <div className="cue-grid">
+          {patient.visualTokens.map((token) => (
+            <button
+              type="button"
+              className={`cue-card${collectedIds.has(token.id) ? ' collected' : ''}`}
+              key={token.id}
+              disabled={collectedIds.has(token.id)}
+              onClick={() => dispatch({ type: 'OBSERVE_VISUAL', tokenId: token.id })}
+            >
+              <span>{collectedIds.has(token.id) || state.focusMode ? token.label : '???'}</span>
+            </button>
+          ))}
+        </div>
+      </aside>
+
+      {/* Response Wheel overlay or dedicated section */}
+      <div className="response-panel panel" style={{ gridColumn: '1 / 3' }}>
+        <p className="eyebrow">Choose your response</p>
         <div className="response-wheel" aria-label="response menu">
           {visibleResponses.map((response, index) => (
             <button
@@ -59,44 +105,15 @@ export function SessionView() {
             </button>
           ))}
         </div>
-      </section>
+      </div>
 
-      <aside className="panel cue-panel">
-        <div className="section-head">
-          <div>
-            <p className="eyebrow">Observation mode</p>
-            <h2>Patient cues</h2>
-          </div>
-          <button
-            type="button"
-            className={state.focusMode ? 'focus-toggle active' : 'focus-toggle'}
-            onClick={() => dispatch({ type: 'TOGGLE_FOCUS' })}
-            aria-label={state.focusMode ? 'Close focus mode' : 'Open focus mode to observe patient cues'}
-          >
-            {state.focusMode ? 'Close focus mode' : 'Open focus mode'}
-          </button>
-        </div>
-        <p className="focus-instruction">Focus mode dims the room and illuminates cue cards. Tap any cue to spend Focus and create a Visual Token.</p>
-        {state.focusMode && <p className="focus-banner" aria-live="polite">Focus mode active. Visual cues are ready for mobile tap collection.</p>}
-        <div className="cue-grid">
-          {patient.visualTokens.map((token) => (
-            <button
-              type="button"
-              className={`cue-card${collectedIds.has(token.id) ? ' collected' : ''}`}
-              key={token.id}
-              disabled={collectedIds.has(token.id)}
-              onClick={() => dispatch({ type: 'OBSERVE_VISUAL', tokenId: token.id })}
-              aria-label={collectedIds.has(token.id) ? `${token.label} collected` : `Observe ${token.label}. Costs Focus.`}
-            >
-              <span>{collectedIds.has(token.id) || state.focusMode ? token.label : 'Unexamined cue'}</span>
-              <small>{collectedIds.has(token.id) ? 'Collected' : 'Costs Focus'}</small>
-            </button>
-          ))}
-        </div>
-      </aside>
-
-      <Clipboard compact />
-      <Handbook />
+      <div className="clipboard-container">
+        <Clipboard compact />
+      </div>
+      
+      <div className="handbook-panel">
+        <Handbook />
+      </div>
     </main>
   );
 }
